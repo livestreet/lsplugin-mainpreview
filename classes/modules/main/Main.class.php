@@ -41,33 +41,59 @@ class PluginMainpreview_ModuleMain extends Module {
 	 * @param $oTopic
 	 */
 	public function AnalysisTopic($oTopic) {
+		$aImages=array();
 		/**
 		 * Анализируем текст на наличие видео
 		 */
-		if (!Config::Get('plugin.mainpreview.make_preview_video')) {
-			return;
-		}
-
-		$sImage=$this->AnalysisTopicYoutube($oTopic);
-		if (!$sImage) {
-			$sImage=$this->AnalysisTopicVimeo($oTopic);
-		}
-		if (!$sImage) {
-			$sImage=$this->AnalysisTopicRutube($oTopic);
-		}
-
-
-		if (!is_null($sImage)) {
-			// удаляем старую превьюшку на основе анализа текста топика
-			if ($oTopic->getPreviewImage()) {
-				$this->DeleteTopic($oTopic);
+		if (Config::Get('plugin.mainpreview.make_preview_video')) {
+			$sImage=$this->AnalysisTopicYoutube($oTopic);
+			if (!$sImage) {
+				$sImage=$this->AnalysisTopicVimeo($oTopic);
 			}
-			/**
-			 * Загружаем превью
-			 */
-			if ($sImagePath=$this->UploadImageByUrl($oTopic,$sImage)) {
-				$oTopic->setPreviewImage($sImagePath);
-				$oTopic->setPreviewImageIsAuto(true);
+			if (!$sImage) {
+				$sImage=$this->AnalysisTopicRutube($oTopic);
+			}
+			if ($sImage) {
+				$aImages[]=$sImage;
+			}
+		}
+		/**
+		 * Анализ текста на наличие изображений
+		 * Анализируем только если не нашли превью до этого в видео
+		 */
+		if (Config::Get('plugin.mainpreview.make_preview_image') and !count($aImages)) {
+			$aImages=$this->AnalysisTopicImages($oTopic);
+		}
+
+		if (count($aImages)) {
+			foreach($aImages as $sImage) {
+				if (!is_null($sImage)) {
+					/**
+					 * Удаляем старую превьюшку на основе анализа текста топика
+					 */
+					if ($oTopic->getPreviewImage()) {
+						$this->DeleteTopic($oTopic);
+					}
+					/**
+					 * Проверяем размер изображения, если он меньше минимальных, то пропускаем это изображение
+					 */
+					if (@$aSize=getimagesize($sImage)) {
+						if ($aSize[0]<Config::Get('plugin.mainpreview.preview_minimal_size_width') or $aSize[1]<Config::Get('plugin.mainpreview.preview_minimal_size_height')) {
+							break;
+						}
+					}
+					/**
+					 * Загружаем превью
+					 */
+					if ($sImagePath=$this->UploadImageByUrl($oTopic,$sImage)) {
+						$oTopic->setPreviewImage($sImagePath);
+						$oTopic->setPreviewImageIsAuto(true);
+						/**
+						 * Завершаем перебор изображений
+						 */
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -134,6 +160,20 @@ class PluginMainpreview_ModuleMain extends Module {
 			$sImage="http://tub.rutube.ru/thumbs/".preg_replace("#((.{2})(.{2}))#U","\\2/\\3/\\1",$aMatch[1],1)."-1.jpg";
 		}
 		return $sImage;
+	}
+
+	/**
+	 * Поиск изображений в тексте топика
+	 *
+	 * @param $oTopic
+	 * @return array
+	 */
+	public function AnalysisTopicImages($oTopic) {
+		$aImages=array();
+		if (preg_match_all('#<\s*img[^>]+src\s*=\s*"(https?://[^"]*)"#i',$oTopic->getText(),$aMatch)) {
+			$aImages=$aMatch[1];
+		}
+		return $aImages;
 	}
 
 	/**
