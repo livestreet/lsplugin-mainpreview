@@ -23,7 +23,7 @@ class PluginMainpreview_ModuleMain_MapperMain extends Mapper {
 								topic_id
 							FROM
 								".Config::Get('db.table.topic')."
-							ORDER BY topic_id ASC
+							ORDER BY topic_id DESC
                             LIMIT ?d, ?d ";
 
 		$aTopics=array();
