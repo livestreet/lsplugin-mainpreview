@@ -291,30 +291,28 @@ class PluginMainpreview_ModuleMain extends Module {
 		$sDirSave = Config::Get('path.uploads.root').'/topics/preview/'.preg_replace('~(.{2})~U', "\\1/", str_pad($oTopic->getId(), 8, "0", STR_PAD_LEFT));
 		$sDirSave=rtrim($sDirSave,'/');
 
-		if (!is_dir(Config::Get('path.root.server').$sDirSave)) {
-			mkdir(Config::Get('path.root.server').$sDirSave, 0755, true);
-		}
-
-		// Добавляем к загруженному файлу расширение
-		$sFile=Config::Get('path.root.server').$sDirSave.'/'.$sFileName.'.'.$oImage->get_image_params('format');
-		rename($sFileTmp,$sFile);
-
 		$bError=false;
 		foreach ($aSizes as $aSize) {
 			// Для каждого указанного в конфиге размера генерируем картинку
 			$sNewFileName = $sFileName.'_'.$aSize['w'];
-			$oImage = $this->Image_CreateImageObject($sFile);
+			$oImage = $this->Image_CreateImageObject($sFileTmp);
 			if ($aSize['crop']) {
 				$this->Image_CropProportion($oImage, $aSize['w'], $aSize['h'], true);
 				$sNewFileName .= 'crop';
 			}
 
-			if (!$this->Image_Resize($sFile,$sDirSave,$sNewFileName,Config::Get('view.img_max_width'),Config::Get('view.img_max_height'),$aSize['w'],$aSize['h'],true,$aParams,$oImage)) {
+			if (!$this->Image_Resize($sFileTmp,$sDirSave,$sNewFileName,Config::Get('view.img_max_width'),Config::Get('view.img_max_height'),$aSize['w'],$aSize['h'],true,$aParams,$oImage)) {
 				$bError=true;
 			}
 		}
+		/**
+		 * Сохраняем оригинальный файл
+		 */
+		if (!($sFile=$this->Image_SaveFile($sFileTmp,$sDirSave,$sFileName.'.'.$oImage->get_image_params('format'),0755,true))) {
+			$bError=true;
+		}
 		if ($bError) {
-			@unlink($sFile);
+			@unlink($sFileTmp);
 			return false;
 		}
 		$oTopic->setPreviewImageOriginalWidth($aImageSize['width']);
