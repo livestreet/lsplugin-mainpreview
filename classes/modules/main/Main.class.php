@@ -31,8 +31,8 @@ class PluginMainpreview_ModuleMain extends Module {
 	 *
 	 * @return array
 	 */
-	public function GetTopics($iCurrPage,$iPerPage) {
-		return $this->Topic_GetTopicsAdditionalData($this->oMapper->GetTopics($iCount,$iCurrPage,$iPerPage));
+	public function GetTopics($iCurrPage,$iPerPage,$aAllowData=null) {
+		return $this->Topic_GetTopicsAdditionalData($this->oMapper->GetTopics($iCount,$iCurrPage,$iPerPage),$aAllowData);
 	}
 
 	/**
@@ -408,6 +408,44 @@ class PluginMainpreview_ModuleMain extends Module {
 					$this->AnalysisTopic($oTopic);
 				}
 			}
+		}
+
+		// из-за бага в движке необходимо изменить поле в основной таблице топика, чтобы произошел апдейт таблицы контента
+		$oTopic->setTextHash(md5($oTopic->getTextSource().'extra'.$oTopic->getExtra()));
+		// Сохраняем данные
+		$this->Topic_UpdateTopic($oTopic);
+	}
+
+	/**
+	 * Переконвертация превью топика из оригинала к новым размерам
+	 *
+	 * @param $oTopic
+	 */
+	public function ReMakePreview($oTopic) {
+		if (!($sOriginal=$oTopic->getPreviewImage())) {
+			return false;
+		}
+		$sOriginal=$this->Image_GetServerPath($sOriginal);
+		$aPath=pathinfo($sOriginal);
+		$aFiles = glob($aPath['dirname']."/*_*.".$aPath['extension']);
+		/**
+		 * Удаляем старые превью
+		 */
+		if($aFiles) {
+			foreach($aFiles as $sFile){
+				$this->Image_RemoveFile($sFile);
+			}
+		}
+		/**
+		 * Создаем новые превью
+		 */
+		if (file_exists($sOriginal) and $sImagePath=$this->UploadImage($oTopic,$sOriginal)) {
+			$oTopic->setPreviewImage($sImagePath);
+		} else {
+			$oTopic->setPreviewImage(null);
+			$oTopic->setPreviewImageOriginalWidth(null);
+			$oTopic->setPreviewImageOriginalHeight(null);
+			$oTopic->setPreviewImageIsAuto(false);
 		}
 
 		// из-за бага в движке необходимо изменить поле в основной таблице топика, чтобы произошел апдейт таблицы контента

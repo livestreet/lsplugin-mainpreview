@@ -1,6 +1,6 @@
 <p>
 	{if $oTopicEdit and $oTopicEdit->getPreviewImage()}
-		<img src="{$oTopicEdit->getPreviewImageWebPath('235crop')}" /><br/>
+		<img src="{$oTopicEdit->getPreviewImageWebPath($sPreviewDefaultName)}" /><br/>
 		<label for="topic_preview_image_delete"><input type="checkbox" id="topic_preview_image_delete" name="topic_preview_image_delete" value="on"> &mdash; {$aLang.plugin.mainpreview.form_preview_image_delete} {if $oTopicEdit->getPreviewImageIsAuto()}({$aLang.plugin.mainpreview.form_preview_image_delete_auto}){/if}</label><br />
 	{/if}
 	<label for="topic_preview_image">{$aLang.plugin.mainpreview.form_preview_image}:</label><br />

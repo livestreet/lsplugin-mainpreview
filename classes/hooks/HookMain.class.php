@@ -55,6 +55,14 @@ class PluginMainpreview_HookMain extends Hook {
 	 * Добавляем форму загружки/удаления превью на страницу редактирования топика
 	 */
 	public function AddTopicPreviewForm() {
+		/**
+		 * Определяем размер для отображения в форме редактирования - берем первый из списка
+		 */
+		$aSize=Config::Get('plugin.mainpreview.size_images_preview');
+		if (isset($aSize[0])) {
+			$sPreviewDefaultName=$aSize[0]['w'].($aSize[0]['crop'] ? 'crop' : '');
+			$this->Viewer_Assign('sPreviewDefaultName',$sPreviewDefaultName);
+		}
 		return $this->Viewer_Fetch(Plugin::GetTemplatePath(__CLASS__).'inject.topic.form.tpl');
 	}
 
