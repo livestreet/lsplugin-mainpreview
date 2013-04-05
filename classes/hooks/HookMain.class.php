@@ -34,6 +34,10 @@ class PluginMainpreview_HookMain extends Hook {
 	 * Обработка превью после сохранения топика
 	 */
 	public function SaveTopic($aParams) {
+		$oUser=$this->User_GetUserCurrent();
+		if (!Config::Get('plugin.mainpreview.allow_user') and (!$oUser or !$oUser->isAdministrator())) {
+			return;
+		}
 		$oTopic=$aParams['oTopic'];
 		/**
 		 * Получаем топик, чтоб подцепить связанные данные
@@ -55,6 +59,10 @@ class PluginMainpreview_HookMain extends Hook {
 	 * Добавляем форму загружки/удаления превью на страницу редактирования топика
 	 */
 	public function AddTopicPreviewForm() {
+		$oUser=$this->User_GetUserCurrent();
+		if (!Config::Get('plugin.mainpreview.allow_user') and (!$oUser or !$oUser->isAdministrator())) {
+			return;
+		}
 		/**
 		 * Определяем размер для отображения в форме редактирования - берем первый из списка
 		 */
