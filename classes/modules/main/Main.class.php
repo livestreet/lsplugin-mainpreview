@@ -75,12 +75,10 @@ class PluginMainpreview_ModuleMain extends Module {
 						$this->DeleteTopic($oTopic);
 					}
 					/**
-					 * Проверяем размер изображения, если он меньше минимальных, то пропускаем это изображение
+					 * Проверка изображения на валидность перед загрузкой
 					 */
-					if (@$aSize=getimagesize($sImage)) {
-						if ($aSize[0]<Config::Get('plugin.mainpreview.preview_minimal_size_width') or $aSize[1]<Config::Get('plugin.mainpreview.preview_minimal_size_height')) {
-							break;
-						}
+					if (!$this->CheckValidateImage($sImage,$oTopic)) {
+						continue;
 					}
 					/**
 					 * Загружаем превью
@@ -96,6 +94,26 @@ class PluginMainpreview_ModuleMain extends Module {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Проверка на валидность
+	 *
+	 * @param $sImage
+	 * @param $oTopic
+	 *
+	 * @return bool
+	 */
+	protected function CheckValidateImage($sImage,$oTopic) {
+		/**
+		 * Проверяем размер изображения, если он меньше минимальных, то пропускаем это изображение
+		 */
+		if (@$aSize=getimagesize($sImage)) {
+			if ($aSize[0]<Config::Get('plugin.mainpreview.preview_minimal_size_width') or $aSize[1]<Config::Get('plugin.mainpreview.preview_minimal_size_height')) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
