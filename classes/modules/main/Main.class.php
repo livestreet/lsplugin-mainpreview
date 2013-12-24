@@ -236,8 +236,18 @@ class PluginMainpreview_ModuleMain extends Module {
 		/**
 		 * Открываем файловый поток и считываем файл поблочно,
 		 * контролируя максимальный размер изображения
+		 * допускаем редиректы по ссылке
 		 */
-		$oFile=@fopen($sUrl,'r');
+		$opts = array(
+            		'http' => array(
+		                'method' => 'GET',
+		                'max_redirects' => '20'
+            		)
+        	);
+
+        	$context = stream_context_create($opts);
+        	
+		$oFile=@fopen($sUrl,'r',false,$context);
 		if(!$oFile) {
 			return false;
 		}
