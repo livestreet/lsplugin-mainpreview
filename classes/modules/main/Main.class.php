@@ -53,6 +53,9 @@ class PluginMainpreview_ModuleMain extends Module {
 			if (!$sImage) {
 				$sImage=$this->AnalysisTopicRutube($oTopic);
 			}
+			if (!$sImage) {
+				$sImage=$this->AnalysisTopicCoub($oTopic);
+			}
 			if ($sImage) {
 				$aImages[]=$sImage;
 			}
@@ -177,6 +180,33 @@ class PluginMainpreview_ModuleMain extends Module {
 		} elseif (preg_match('#<\s*embed[^>]+src\s*=\s*"https?://video\.rutube\.ru/([a-zA-Z0-9_\-]+)[^"]*"#i',$oTopic->getText(),$aMatch)) {
 			$sImage="http://tub.rutube.ru/thumbs/".preg_replace("#((.{2})(.{2}))#U","\\2/\\3/\\1",$aMatch[1],1)."-1.jpg";
 		}
+		return $sImage;
+	}
+	
+	/**
+	 * Поиск видео с Coub
+	 *
+	 * @param $oTopic
+	 * @return null|string
+	 */
+	public function AnalysisTopicCoub($oTopic) {
+		$sImage=null;
+		$bCoubView=false;
+		$bCoubEmbed=false;
+		if (preg_match('#<\s*param[^>]+value\s*=\s*"https?://(?:www\.|)coub\.com/view/([a-zA-Z0-9_\-]+)[^"]*"#i',$oTopic->getText(),$aMatch)) {
+			$bCoubView=true;
+		} elseif (preg_match('#<\s*iframe[^>]+src\s*=\s*"https?://(?:www\.|)coub\.com/embed/([a-zA-Z0-9_\-]+)[^"]*"#i',$oTopic->getText(),$aMatch)) {
+			$bCoubEmbed=true;
+		}
+		if($bCoubEmbed || $bCoubView) {
+			$sReturn = file_get_contents('http://coub.com/api/oembed.json?url=http://coub.com/'.(($bCoubEmbed)?'embed':'view').'/'.$aMatch[1]);
+			if($sReturn) {
+				$oJson = json_decode($sReturn);
+				if(!isset($oJson->{'error'}))
+					$sImage = $oJson->{'thumbnail_url'};
+			}
+		}
+		
 		return $sImage;
 	}
 
